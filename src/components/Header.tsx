@@ -1,8 +1,9 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { AppBar, Button, IconButton, Toolbar, Typography, Box, Avatar } from '@mui/material';
+import { AppBar, Button, Toolbar, Box, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Typography } from '@mui/material';
 import { useNovaDispatch, useNovaSelector, setColorMode } from '@/state';
 import { selectColorMode } from '@/state/settings';
-import { Brightness4, Brightness7, LogoutOutlined, PersonOutlined } from '@mui/icons-material';
+import { Brightness4, Brightness7, LogoutOutlined, PersonOutlined, SmartToy } from '@mui/icons-material';
+import { useState } from 'react';
 
 type HeaderProps = {
     user: ReturnType<typeof useAuth0>['user'];
@@ -12,81 +13,162 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ user, logout }) => {
     const dispatch = useNovaDispatch();
     const mode = useNovaSelector(selectColorMode);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
 
     const handleThemeChange = () => {
         dispatch(setColorMode(mode === 'light' ? 'dark' : 'light'));
+        setAnchorEl(null);
+    };
+
+    const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleLogout = () => {
+        logout({ logoutParams: { returnTo: window.location.origin } });
+        setAnchorEl(null);
     };
 
     return (
         <AppBar position="static" elevation={2}>
-            <Toolbar sx={{ py: 1, px: 3 }}>
-                <Typography 
-                    variant="h5" 
-                    component="div" 
+            <Toolbar sx={{ py: { xs: 0.5, sm: 1 }, px: { xs: 2, sm: 3 } }}>
+                {/* Logo/Brand Icon */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SmartToy sx={{ 
+                        fontSize: '2rem', 
+                        color: 'primary.main'
+                    }} />
+                </Box>
+                
+                {/* Spacer */}
+                <Box sx={{ flexGrow: 1 }} />
+                
+                {/* Avatar with user name and dropdown - using Button with proper clickaway */}
+                <Button
+                    onClick={handleAvatarClick}
+                    color="inherit"
                     sx={{ 
-                        flexGrow: 1, 
-                        fontWeight: 600,
-                        letterSpacing: '-0.02em'
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        padding: '4px 8px',
+                        borderRadius: '50px',
+                        textTransform: 'none',
+                        minWidth: 'auto',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                        }
                     }}
                 >
-                    Nova Agent Management
-                </Typography>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar 
-                            src={user?.picture} 
-                            sx={{ width: 32, height: 32 }}
-                        >
-                            <PersonOutlined />
-                        </Avatar>
-                        <Typography 
-                            variant="body1" 
-                            sx={{ 
-                                fontWeight: 500,
-                                display: { xs: 'none', sm: 'block' }
-                            }}
-                        >
-                            {user?.name || user?.email}
-                        </Typography>
-                    </Box>
-                    
-                    <IconButton 
-                        onClick={handleThemeChange} 
-                        color="inherit"
+                    {/* Avatar */}
+                    <Avatar 
+                        src={user?.picture} 
                         sx={{ 
-                            ml: 1,
-                            p: 1.5,
-                            borderRadius: 2
+                            width: { xs: 32, sm: 36 }, 
+                            height: { xs: 32, sm: 36 }
                         }}
                     >
-                        {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-                    </IconButton>
+                        <PersonOutlined />
+                    </Avatar>
                     
-                    <Button
-                        variant="outlined"
-                        color="inherit"
-                        startIcon={<LogoutOutlined />}
-                        onClick={() =>
-                            logout({ logoutParams: { returnTo: window.location.origin } })
-                        }
-                        sx={{
-                            ml: 1,
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            textTransform: 'none',
+                    {/* User name - visible on larger screens, now on the right */}
+                    <Typography 
+                        variant="body2" 
+                        sx={{ 
                             fontWeight: 500,
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            display: { xs: 'none', sm: 'block' },
+                            maxWidth: { sm: 120, md: 180 },
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {user?.name || user?.email}
+                    </Typography>
+                </Button>
+                
+                <Menu
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    sx={{
+                        '& .MuiPaper-root': {
+                            mt: 1.5,
+                            minWidth: 200,
+                            borderRadius: '16px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+                        }
+                    }}
+                >
+                    {/* User info - shown in dropdown for mobile */}
+                    <MenuItem 
+                        disabled 
+                        sx={{ 
+                            opacity: 1,
+                            cursor: 'default',
+                            '&:hover': { backgroundColor: 'transparent' },
+                            display: { xs: 'flex', sm: 'none' }
+                        }}
+                    >
+                        <ListItemIcon>
+                            <Avatar 
+                                src={user?.picture} 
+                                sx={{ width: 24, height: 24 }}
+                            >
+                                <PersonOutlined />
+                            </Avatar>
+                        </ListItemIcon>
+                        <ListItemText 
+                            primary={user?.name || user?.email}
+                            primaryTypographyProps={{ 
+                                variant: 'body2', 
+                                fontWeight: 500,
+                                noWrap: true
+                            }}
+                        />
+                    </MenuItem>
+                    
+                    <Divider sx={{ display: { xs: 'block', sm: 'none' } }} />
+                    
+                    {/* Theme toggle */}
+                    <MenuItem 
+                        onClick={handleThemeChange}
+                        sx={{
                             '&:hover': {
-                                borderColor: 'rgba(255, 255, 255, 0.5)',
                                 backgroundColor: 'rgba(255, 255, 255, 0.1)'
                             }
                         }}
                     >
-                        Log Out
-                    </Button>
-                </Box>
+                        <ListItemIcon>
+                            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                        </ListItemIcon>
+                        <ListItemText primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'} />
+                    </MenuItem>
+                    
+                    <Divider />
+                    
+                    {/* Logout */}
+                    <MenuItem 
+                        onClick={handleLogout}
+                        sx={{
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }}
+                    >
+                        <ListItemIcon>
+                            <LogoutOutlined />
+                        </ListItemIcon>
+                        <ListItemText primary="Log Out" />
+                    </MenuItem>
+                </Menu>
             </Toolbar>
         </AppBar>
     );
