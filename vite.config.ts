@@ -32,22 +32,6 @@ export default defineConfig({
   build: {
     minify: 'terser',
     cssMinify: 'lightningcss',
-    rollupOptions: {
-      output: {
-        manualChunks: (id: string) => {
-          if (id.includes('react-router') || id.includes('react-router')) {
-            return '@vendor-react-router';
-          }
-
-          if (id.includes('react') || id.includes('react-dom')) {
-            return '@vendor-react-vendor';
-          }
-          if (id.includes('auth0')) {
-            return '@vendor-auth0';
-          }
-        },
-      },
-    },
   },
   resolve: {
     alias: {
